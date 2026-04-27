@@ -5,7 +5,6 @@ import pandas as pd
 
 app = FastAPI()
 
-# Frontend (Netlify) ko access dene ke liye
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,25 +14,30 @@ app.add_middleware(
 
 @app.get("/")
 def home():
-    return {"status": "Backforge API is Live", "message": "Ready for backtesting"}
+    return {"status": "Backforge API is Live", "message": "Engine Ready"}
 
 @app.get("/get-data")
 def get_stock_data(symbol: str, period: str = "1y"):
     try:
-        # NSE stocks ke liye suffix handle karna
         ticker_symbol = symbol if "." in symbol else f"{symbol}.NS"
         ticker = yf.Ticker(ticker_symbol)
         df = ticker.history(period=period)
         
         if df.empty:
-            return {"error": "No data found for this symbol"}
+            return {"error": "No data found"}
         
+        # Manual RSI Calculation (No pandas_ta needed)
+        delta = df['Close'].diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+        rs = gain / loss
+        df['RSI'] = 100 - (100 / (1 + rs))
+
         data = {
             "symbol": ticker_symbol,
             "dates": df.index.strftime('%Y-%m-%d').tolist(),
             "close": df['Close'].round(2).tolist(),
-            "high": df['High'].round(2).tolist(),
-            "low": df['Low'].round(2).tolist(),
+            "rsi": df['RSI'].fillna(50).round(2).tolist(),
             "volume": df['Volume'].tolist()
         }
         return data

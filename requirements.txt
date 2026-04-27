@@ -2,5 +2,5 @@ fastapi
 uvicorn
 yfinance
 pandas==2.2.2
-pandas_ta
+https://github.com/twopirllc/pandas-ta/archive/refs/heads/main.zip
 python-multipart

@@ -1,6 +1,6 @@
 fastapi
 uvicorn
 yfinance
-pandas
+pandas==2.2.2
 pandas_ta
 python-multipart
